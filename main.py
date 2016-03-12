@@ -1,7 +1,5 @@
 import Tkinter as tk
-import tkMessageBox
-import tkFileDialog
-import win32con
+import tkMessageBox, tkFileDialog, win32con
 
 class Window(tk.Frame):
     def __init__(self, master = None):
