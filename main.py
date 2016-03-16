@@ -1,14 +1,15 @@
 import Tkinter as tk
-import tkMessageBox, tkFileDialog, win32con
+import tkMessageBox, tkFileDialog, win32con, tkColorChooser, ctypes
 
 class Window(tk.Frame):
-    def __init__(self, master = None):
-        tk.Frame.__init__(self, master)   
-        self.configure(background = "#ababab") ###ababab               
-        self.master = master
-        self.init_window()
-
-    def init_window(self):
+	def __init__(self, master = None):
+		tk.Frame.__init__(self, master)   
+		self.color = ((255, 250, 255), "#aaabab")
+		self.configure(background = self.color[1]) ###ababab               
+		self.master = master
+		self.init_window()
+		
+	def init_window(self):
 		self.pack(fill = tk.BOTH, expand = 1)
 
 		# create a menu instance
@@ -58,61 +59,61 @@ class Window(tk.Frame):
 									command = self.New)
 		#added "help" to menu
 		menu.add_cascade(label = "Help", menu = help)
-
-    def New(self):
+		
+	def New(self):
 		global Top
-		Top = NewWindow(self)
-		Top.title("Main")
-		Top.bind("<Button-1>", self.flash)
+		self.__NewWindow('Main', 250, 300)
+		
 
-    def Open(self):
-        tkFileDialog.askopenfilename()
+	def Open(self):
+		tkFileDialog.askopenfilename()
 
-    def Save(self):
-        pass
+	def Save(self):
+		pass
 
-    def Save_as(self):
-        pass
+	def Save_as(self):
+		pass
 
-    def change_bgn(self):
-        self.configure(background = "black")
+	def change_bgn(self):
+		self.color = tkColorChooser.askcolor(initialcolor = self.color[1])
+		self.configure(background = self.color[1]) ###ababab
 
-    def flash(self, event):
-        if Top.winfo_containing(event.x_root, event.y_root)!=Top:
-            Top.focus_force()
-            Top.bell()
-            number_of_flashes = 5
-            flash_time = 80
-            info = FLASHWINFO(0,
-                              windll.user32.GetForegroundWindow(),
-                              win32con.FLASHW_ALL,
-                              number_of_flashes,
-                              flash_time)
-            info.cbSize = sizeof(info) 
-            windll.user32.FlashWindowEx(byref(info))
+	def __NewWindow(self,name,w,h):
+		global ws, hs
+		self.top = tk.Toplevel(self.master)
+		self.top.focus_set()
+		self.top.transient(self)
+		self.top.grab_set()
+		x, y = (ws/2) - (w/2), (hs/2) - (h/2)
+		self.top.geometry("%dx%d+%d+%d" % (w, h, x, y))
+		self.top.resizable(width='FALSE', height='FALSE')
+		self.top.bind("<ButtonPress>", self.flash)
 
-def NewWindow(self):
-    global ws, hs, root
-    self.top = tk.Toplevel(self.master)
-    self.top.focus_set()
-    self.top.transient(self)
-    self.top.grab_set()
-    w, h = 100, 200
-    x, y = (ws/2) - (w/2), (hs/2) - (h/2)
-    self.top.geometry("%dx%d+%d+%d" % (w, h, x, y))
-    return self.top
+	def flash(self, event):
+		if self.top.winfo_containing(event.x_root, event.y_root) != self.top:
+			self.top.bell()
+			number_of_flashes = 3
+			flash_time = 80
+			info = FLASHWINFO(0,
+							  ctypes.windll.user32.GetForegroundWindow(),
+							  win32con.FLASHW_ALL,
+							  number_of_flashes,
+							  flash_time)
+			info.cbSize = ctypes.sizeof(info) 
+			ctypes.windll.user32.FlashWindowEx(ctypes.byref(info))
 
 def client_exit(*self):
 		if tkMessageBox.askyesno("OpenPlot", 
-				"Are you sure you want to exit?", icon = 'warning'):
+				"Are you sure you want to exit?", 
+				icon = 'warning', default = "yes"):
 			root.destroy() #exit() root.quit()
 
-class FLASHWINFO(Structure): 
-    _fields_ = [('cbSize', c_uint), 
-                ('hwnd', c_uint), 
-                ('dwFlags', c_uint), 
-                ('uCount', c_uint), 
-                ('dwTimeout', c_uint)]
+class FLASHWINFO(ctypes.Structure): 
+    _fields_ = [('cbSize', ctypes.c_uint), 
+                ('hwnd', ctypes.c_uint), 
+                ('dwFlags', ctypes.c_uint), 
+                ('uCount', ctypes.c_uint), 
+                ('dwTimeout', ctypes.c_uint)]
 		
 if __name__ == "__main__":
     root = tk.Tk()
@@ -120,11 +121,12 @@ if __name__ == "__main__":
     ws, hs = root.winfo_screenwidth(), root.winfo_screenheight()
     x, y = (ws/2) - (w/2), (hs/2) - (h/2)
     #root.wm_state('zoomed')
-    root.minsize("800", "600")
+    root.minsize(str(w),str(h))
     root.title('')
+    #root.overrideredirect(True)
     root.geometry("%dx%d+%d+%d" % (w, h, x, y))
-    root.iconbitmap('C:\Users\dartz\Desktop\iconlog.ico')
-    root.resizable(width='FALSE', height='FALSE')
+    root.iconbitmap(default = 'C:\Users\dartz\Desktop\iconlog.ico')
+    #root.resizable(width='FALSE', height='FALSE')
     app = Window(root)
     # app.pack(side="top", fill="both", expand=True)
     root.protocol("WM_DELETE_WINDOW", client_exit)
